@@ -92,7 +92,7 @@ class SearchBar extends Component {
             this.setState({isJokesDone:false})
             this.getJokes()
             var searchQuery = this.state.searchQuery;  
-            let url = "https://ec2-35-156-27-42.eu-central-1.compute.amazonaws.com:3223/api/post"
+            let url = "https://facebookscraper.cloudns.ph:3223/api/post"
             axios.post(url, {
               id: searchQuery
             })
