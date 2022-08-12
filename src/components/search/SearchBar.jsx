@@ -1,6 +1,6 @@
 import React, { Component } from 'react';   
 import Card from '@mui/material/Card';
-
+import Alert from '@mui/material/Alert';
 import CardContent from '@mui/material/CardContent';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -10,7 +10,7 @@ import axios from 'axios'
 
 class SearchBar extends Component {
 
-
+  
 
 
           constructor(props) {
@@ -22,7 +22,9 @@ class SearchBar extends Component {
               isJokesDone:false,
               isJokesStarted:false,
               data: [],
-              jokes: {}
+              jokes: {},
+              error:[],
+              fault: false
             }
        
           }
@@ -61,9 +63,9 @@ class SearchBar extends Component {
                 .then( (response) => {
                     this.setState({jokes: response.data})
               }).catch( (error) => {
-                    console.error(error);
+                    this.setState({jokes: "error"});
               });
-              if (this.state.data.length!==0) {
+              if (this.state.data.length!==0 || this.state.error.length!==0) {
                 this.setState({isJokesDone: true})
                 clearInterval(intervalID); // Stop the interval if the condition holds true
               }
@@ -85,29 +87,43 @@ class SearchBar extends Component {
             return <div> Loading ... </div>
           }
           
+          
 
 
           activateLasers()  {
+
+            var port = 3223
             this.setState({data:[]})
+            this.setState({error:[]})
             this.setState({isJokesDone:false})
+            this.setState({fault: false})
             this.getJokes()
             var searchQuery = this.state.searchQuery;  
-            let url = "https://facebookscraper.cloudns.ph:3223/api/post"
+            let url = "https://facebookscraper.cloudns.ph:" + port +"/api/post"
             axios.post(url, {
               id: searchQuery
             })
             .then( (response) => {
-              console.log(response.data);
               this.setState({data: response.data})
-              console.log(this.state.data.length)
               this.setState({isLoading: false})
               this.setState({isJokesStarted:false})
             })
             .catch((error)=> {
-              console.log(error);
+              this.setState({fault: true})
+              this.setState({error:[{error:"An error occured"}]})
+              this.setState({data:[]})
+              this.setState({isLoading: false})
+              this.setState({isJokesStarted:false})
             });
           
           }
+
+          renderAlert =() =>{
+            if(this.state.fault === true){
+              return<Alert severity="error">Something went wrong. Please try again!</Alert>
+            }
+          }
+
           renderJokes=() => {
             if(this.state.isJokesDone=== false ){              
               return<h2>{this.state.jokes.value}</h2>
@@ -115,7 +131,7 @@ class SearchBar extends Component {
           }
           renderText=() =>{
               if (this.state.isJokesStarted===true) {
-                return <h2>Hacking facebook to reterive data 😉. But in the mean time here are some chuck Noris Jokes for your entertaiment <br></br></h2>
+                return <h2>Hacking facebook to reterive data <span role="img">😉</span>. But in the mean time here are some chuck Noris Jokes for your entertaiment <br></br></h2>
               } else {
                 return <h2></h2>
               }
@@ -130,7 +146,11 @@ class SearchBar extends Component {
 
     render() {
         return (
+          <div>
           <div className="searchBar">
+              <div className='alertBar'>
+                {this.renderAlert()}
+              </div>
                 <div className = "textfield">
                   <TextField
                    type="text" 
@@ -143,15 +163,8 @@ class SearchBar extends Component {
                 <div className='empty'>
                   <Button className='button' variant='outlined' onClick={this.activateLasers.bind(this)} disabled={this.state.isJokesStarted ? true : false}>Search</Button>
                 </div>
-                <div>
-                  <div className="mainText">
-                    {this.renderText()}
-                  </div>
-                  <div className='jokes'>
-                    {this.renderJokes()}
-                  </div>
-                </div>
                 {this.state.data.map(post => (
+                              <div>
                               <div className='postCard'>
                                 <Card sx={{ minWidth: 275 }}>
                                   <CardContent>
@@ -176,10 +189,21 @@ class SearchBar extends Component {
                                   </CardContent>
                                 </Card>
                               </div>
+                          
+                              </div>
                       ))
 
                 }
 
+          </div>
+          <div>
+            <div className="mainTexts">
+              {this.renderText()}
+            </div>
+            <div className='jokes'>
+              {this.renderJokes()}
+            </div>
+          </div>
           </div>
         );
     }
